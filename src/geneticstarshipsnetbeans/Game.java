@@ -24,24 +24,23 @@ public class Game extends PApplet {
 
     @Override
     public void setup() {
-        size(1366, 768, P3D);
+        size(1280, 680, P3D);
 
         Sounds.Initialise(this);
 
         Gen gen;
-        for(int i = 0; i < 50; ++i) {
+        for(int i = 0; i < 3; ++i) {
             gen = new Gen();
 
-            for(int mcount = 0; mcount < 100; ++mcount) {
+            for(int mcount = 0; mcount < 1000000; ++mcount) {
                 gen.mutate();
             }
-            float x = (random(1) > 0.5
-                    ? sqrt(random(width / 2))
-                    : width - sqrt(random(width / 2)));
-            float y = (random(1) > 0.5
-                    ? sqrt(random(height / 2))
-                    : height - sqrt(random(height / 2)));
-            Ship.createShip(gen, x, y);
+            float x = random(width);
+            float y = random(height);
+            for(int j = 0; j < 4; ++j) {
+                gen.mutate();
+                Ship.createShip(gen, x, y);
+            }
         }
         PFont font;
         font = loadFont("BodoniMT-BoldItalic-15.vlw");
@@ -56,14 +55,12 @@ public class Game extends PApplet {
     @Override
     public void draw() {
         background(134, 207, 89);
-
-
         for(int iter = 0; iter < Game.getSingleton().iterationCountPerFrame; ++iter) {
-            Ship.UpdateAll();
             Actor.UpdateAll();
+            Ship.UpdateAll();
         }
-        Ship.DrawAll();
         Actor.DrawAll();
+        Ship.DrawAll();
     }
 
     /**
@@ -72,5 +69,5 @@ public class Game extends PApplet {
     public static void main(String[] args) {
         PApplet.main(new String[]{geneticstarshipsnetbeans.Game.class.getName()});
     }
-    int iterationCountPerFrame = 5;
+    int iterationCountPerFrame = 1;
 }

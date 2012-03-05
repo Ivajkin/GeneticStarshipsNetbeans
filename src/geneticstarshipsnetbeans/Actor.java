@@ -4,7 +4,7 @@ package geneticstarshipsnetbeans;
  *
  * @author Tim
  */
-public class Actor {
+public abstract class Actor {
 
     Actor() {
         actors[actorCount++] = this;
@@ -26,12 +26,10 @@ public class Actor {
         }
     }
 
-    protected void Update() {
-    }
-
-    protected void Draw() {
-    }
-    private static Actor[] actors = new Actor[4096];
+    protected abstract void Update();
+    protected abstract void Draw();
+    
+    private static Actor[] actors = new Actor[2048 * 2048];
     private static int actorCount = 0;
     protected boolean isDead = false;
 }

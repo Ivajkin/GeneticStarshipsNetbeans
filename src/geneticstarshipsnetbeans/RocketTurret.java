@@ -18,6 +18,10 @@ public class RocketTurret extends Actor {
         a += 0.05;
         x = (float) (owner.x + range * Math.cos(a));
         y = (float) (owner.y + range * Math.sin(a));
+        
+        if(owner.isDead) {
+            isDead = (Math.random() < 0.3);
+        }
     }
 
     @Override

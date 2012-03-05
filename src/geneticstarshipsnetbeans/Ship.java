@@ -63,7 +63,7 @@ public class Ship {
         //ellipse(x, y, gen.radius, gen.radius);
         float r = gen.radius;
         // Фертильность шар
-        Game.getSingleton().ellipse(x, y, r * fertile * 0.003f, r * fertile * 0.003f);
+        Game.getSingleton().ellipse(x, y, r * fertile * 0.0005f, r * fertile * 0.0005f);
         //rect(x-r/2, y-r/2, r, r);
         Game.getSingleton().ellipse(x, y, r, r);
 
@@ -77,64 +77,72 @@ public class Ship {
         }*/
     }
 
-    void Update() {
-        //System.out.println("hp: " + hp);
-        hp -= 0.01;
-        // Штрафы
-        if(livingShipCount > 256) {
-            hp -= 0.04;
-        }
-        if(livingShipCount > 512) {
-            hp -= 0.04;
-        }
-        if(livingShipCount > 1024) {
-            hp -= 0.04;
-        }
-        if(gen.radius > 13) {
-            hp -= 0.03;
-        }
-        if(gen.speed > 1) {
-            hp -= 0.03;
-        }
-
-        if(livingShipCount < 200) {
-            fertile += 0.53;
-        } else if(livingShipCount > 500) {
-            fertile -= 0.2;
+    private void UpdateLifeCycle() {
+        // Здоровье - отражает также старение.
+        // Если кораблей очень много - штарф по здоровью (они болеют).
+        if(livingShipCount < 300) {
+            // Нормальное старение.
+            hp -= 0.04f;
+            fertile += 0.53f;
+        } else if(livingShipCount < 800) {
+            // Средний штраф.
+            hp -= 0.08f;
+            fertile += 0.33f;
         } else {
-            fertile += 0.33;
+            // Высокий штраф.
+            hp *= 0.95f;
+            hp -= 0.08f + Math.random()*0.2f + Math.random()*0.6f;
+            fertile += 0.2f + Math.random()*0.05f;
         }
-
+        
+        // Очень большие корабли штрафуем.
+        if(gen.radius > 13) {
+            hp -= 0.03f;
+        }
+        // Слишком быстрые штрафуем.
+        if(gen.speed > 1) {
+            hp -= 0.03f;
+        }
+    }
+    void Update() {
+        hp += food.getFoodCell(x, y).getFood()*100;
+        UpdateLifeCycle();
         if(hp <= 0) {
             isDead = true;
             Sounds.playShipExplosion();
+            return;
         }
+        
         double vel = Math.random() * gen.speed;
         double a = Math.random() * 2 * Math.PI;
-        vx *= 0.98;
-        vy *= 0.98;
+        vx *= 0.98f;
+        vy *= 0.98f;
         vx += vel * Math.cos(a);
         vy += vel * Math.sin(a);
 
         x += vx;
         y += vy;
 
-        for(int i = 0; i < shipCount; ++i) {
-            if(!ships[i].isDead
-                    && ships[i] != this
-                    && Math.abs(ships[i].x - x)
-                    + Math.abs(ships[i].y - y)
-                    < ships[i].gen.radius + this.gen.radius) {
+        final int maxLivingAmount = 10000;
+        if(livingShipCount < maxLivingAmount) {
+            for(int i = 0; i < shipCount; ++i) {
+                if(!ships[i].isDead
+                        && ships[i] != this
+                        && isCollideWith(ships[i])) {
 
-                //System.out.println("fertile: " + ships[i].fertile);
-                if((ships[i].gen.fertileAge
-                        - ships[i].fertile)
-                        < 0.001 
-                        && (this.gen.fertileAge - this.fertile) < 0.001) {
-                    ships[i].fertile = 0;
-                    this.fertile = 0;
-                    Create(ships[0],
-                            ships[1]);
+                    //System.out.println("fertile: " + ships[i].fertile);
+                    if((ships[i].gen.fertileAge
+                            - ships[i].fertile)
+                            < 0.001
+                            && (this.gen.fertileAge - this.fertile) < 0.001) {
+                        // Обнуляем способность к воспроизведению.
+                        ships[i].fertile = 0;
+                        this.fertile = 0;
+                        // Ослабляем после воспроизведения.
+                        ships[i].hp *= 0.8f;
+                        this.hp *= 0.8f;
+                        Create(ships[i], this);
+                    }
                 }
             }
         }
@@ -198,5 +206,12 @@ public class Ship {
     
     private static int livingShipCount;
     private static int shipCount;
-    private static Ship[] ships = new Ship[2048 * 8];
+    private static FoodField food = new FoodField();
+    private static Ship[] ships = new Ship[2048 * 2048];
+
+    private boolean isCollideWith(Ship ship) {
+        return Math.abs(ship.x - x)
+                    + Math.abs(ship.y - y)
+                    < ship.gen.radius + this.gen.radius;
+    }
 }
